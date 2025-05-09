@@ -1,0 +1,15 @@
+project_id           = "despliegue-458304"
+region               = "europe-west4"
+zones                = ["europe-west4-a"]
+cluster_name         = "torcal-ml-cluster"
+network              = "default"
+subnetwork           = "default"
+ip_range_pods        = ""
+ip_range_services    = ""
+machine_type         = "e2-standard-8"
+min_node_count       = 1
+max_node_count       = 3
+disk_size_gb         = 100
+initial_node_count   = 1
+service_account      = "terraform-account@despliegue-458304.iam.gserviceaccount.com"
+argocd_chart_version = "5.51.4"
