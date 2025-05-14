@@ -41,11 +41,12 @@ resource "google_container_node_pool" "gpu_nodes" {
     // Etiquetas para identificar nodos con GPU
     labels = {
       "gpu" = "true"
+      "cloud.google.com/gke-accelerator" = var.gpu_accelerator_type
     }
 
     // Taints para evitar que cargas sin tolerations usen estos nodos
     taint {
-      key    = "cloud.google.com/gke-accelerator"
+      key    = "nvidia.com/gpu"
       value  = "present"
       effect = "NO_SCHEDULE"
     }

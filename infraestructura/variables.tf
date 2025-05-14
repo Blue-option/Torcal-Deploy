@@ -62,7 +62,7 @@ variable "min_node_count" {
 variable "max_node_count" {
   description = "Número máximo de nodos por zona"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "disk_size_gb" {
@@ -97,7 +97,7 @@ variable "app_namespace" {
 variable "gpu_machine_type" {
   description = "Tipo de máquina para los nodos con GPU"
   type        = string
-  default     = "g2-standard-4"
+  default     = "g2-standard-8"
 }
 
 variable "gpu_min_count" {
@@ -115,7 +115,7 @@ variable "gpu_max_count" {
 variable "gpu_disk_size_gb" {
   description = "Tamaño del disco para los nodos GPU en GB"
   type        = number
-  default     = 100
+  default     = 50
 }
 
 variable "gpu_accelerator_type" {

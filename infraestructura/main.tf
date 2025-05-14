@@ -21,6 +21,7 @@ module "gke" {
   create_service_account     = true
   remove_default_node_pool   = true
 
+  
   node_pools = [
     {
       name               = "general-node-pool"
@@ -84,59 +85,6 @@ data "kubernetes_service" "argocd_server" {
   depends_on = [helm_release.argocd]
 }
 
-// Crear namespace para Kafka
-resource "kubernetes_namespace" "kafka_system" {
-  metadata {
-    name = "kafka-system"
-  }
 
-  depends_on = [module.gke]
-}
 
-// Instalar Kafka usando Helm
-resource "helm_release" "kafka" {
-  name             = "kafka"
-  repository       = "https://charts.bitnami.com/bitnami"
-  chart            = "kafka"
-  version          = "20.1.1"  // O la versión que prefieras
-  namespace        = kubernetes_namespace.kafka_system.metadata[0].name
-  create_namespace = false
-  
-  values = [
-    <<-EOF
-    replicaCount: 1
-    autoCreateTopicsEnable: true
-    deleteTopicEnable: true
-    persistence:
-      enabled: true
-      size: 10Gi
-    EOF
-  ]
 
-  depends_on = [module.gke]
-}
-
-// Crear namespace para KEDA
-resource "kubernetes_namespace" "keda" {
-  metadata {
-    name = "keda"
-  }
-
-  depends_on = [module.gke]
-}
-
-// Instalar KEDA usando Helm
-resource "helm_release" "keda" {
-  name       = "keda"
-  repository = "https://kedacore.github.io/charts"
-  chart      = "keda"
-  version    = "2.11.2"  // O la versión que prefieras
-  namespace  = kubernetes_namespace.keda.metadata[0].name
-
-  set {
-    name  = "crds.install"
-    value = "true"
-  }
-
-  depends_on = [kubernetes_namespace.keda]
-}
