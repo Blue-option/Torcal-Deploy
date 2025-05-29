@@ -103,7 +103,7 @@ variable "gpu_machine_type" {
 variable "gpu_min_count" {
   description = "Número mínimo de nodos GPU"
   type        = number
-  default     = 0
+  default     = 1
 }
 
 variable "gpu_max_count" {

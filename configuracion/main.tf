@@ -51,3 +51,4 @@ resource "kubernetes_manifest" "argocd_application" {
     }
   }
 }
+
