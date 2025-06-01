@@ -50,7 +50,7 @@ variable "ip_range_services" {
 variable "machine_type" {
   description = "Tipo de máquina para los nodos"
   type        = string
-  default     = "e2-standard-8"
+  default     = "c2-standard-8"
 }
 
 variable "min_node_count" {

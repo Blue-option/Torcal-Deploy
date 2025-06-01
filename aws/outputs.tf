@@ -1,54 +1,173 @@
-# Outputs para verificar la conexión
-output "account_id" {
-  description = "ID de la cuenta AWS"
-  value       = data.aws_caller_identity.current.account_id
-}
+# outputs.tf - Valores de salida
 
-output "caller_arn" {
-  description = "ARN del usuario/rol actual"
-  value       = data.aws_caller_identity.current.arn
-}
-
-output "region" {
-  description = "Región actual"
-  value       = data.aws_region.current.name
-}
-
-output "availability_zones" {
-  description = "Zonas de disponibilidad en la región"
-  value       = data.aws_availability_zones.available.names
-}
-
-# Outputs del cluster
+# Cluster Information
 output "cluster_endpoint" {
-  description = "Endpoint del cluster EKS"
-  value       = try(aws_eks_cluster.main.endpoint, "")
-}
-
-output "cluster_name" {
-  description = "Nombre del cluster EKS"
-  value       = var.cluster_name
+  description = "Endpoint for EKS control plane"
+  value       = aws_eks_cluster.main.endpoint
 }
 
 output "cluster_security_group_id" {
-  description = "Security group ID del cluster"
-  value       = try(aws_eks_cluster.main.vpc_config[0].cluster_security_group_id, "")
+  description = "Security group ID attached to the EKS cluster"
+  value       = aws_security_group.cluster.id
 }
 
-# Outputs de ArgoCD
-output "argocd_server_url" {
-  description = "URL del servidor ArgoCD"
-  value       = try("http://${data.kubernetes_service.argocd_server.status[0].load_balancer[0].ingress[0].hostname}", "")
+output "cluster_iam_role_name" {
+  description = "IAM role name associated with EKS cluster"
+  value       = aws_eks_cluster.main.role_arn
 }
 
-output "argocd_initial_admin_password" {
-  description = "Contraseña inicial del admin de ArgoCD"
-  value       = try(data.kubernetes_secret.argocd_initial_admin_secret.data.password, "")
+output "cluster_certificate_authority_data" {
+  description = "Base64 encoded certificate data required to communicate with the cluster"
+  value       = aws_eks_cluster.main.certificate_authority[0].data
   sensitive   = true
 }
 
-# Comando para configurar kubectl
-output "configure_kubectl" {
-  description = "Comando para configurar kubectl"
-  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${var.cluster_name}"
+output "cluster_name" {
+  description = "The name of the EKS cluster"
+  value       = aws_eks_cluster.main.name
+}
+
+output "cluster_id" {
+  description = "The name/id of the EKS cluster"
+  value       = aws_eks_cluster.main.id
+}
+
+output "cluster_arn" {
+  description = "The Amazon Resource Name (ARN) of the cluster"
+  value       = aws_eks_cluster.main.arn
+}
+
+output "cluster_version" {
+  description = "The Kubernetes server version for the cluster"
+  value       = aws_eks_cluster.main.version
+}
+
+output "cluster_platform_version" {
+  description = "The platform version for the cluster"
+  value       = aws_eks_cluster.main.platform_version
+}
+
+output "cluster_status" {
+  description = "Status of the EKS cluster. One of `CREATING`, `ACTIVE`, `DELETING`, `FAILED`"
+  value       = aws_eks_cluster.main.status
+}
+
+# OIDC Provider
+output "cluster_oidc_issuer_url" {
+  description = "The URL on the EKS cluster OIDC Issuer"
+  value       = try(aws_eks_cluster.main.identity[0].oidc[0].issuer, "")
+}
+
+output "oidc_provider_arn" {
+  description = "The ARN of the OIDC Provider if enabled"
+  value       = try(aws_iam_openid_connect_provider.cluster.arn, "")
+}
+
+# Node Groups
+output "node_groups" {
+  description = "Node group details"
+  value = {
+    general = {
+      id             = aws_eks_node_group.general.id
+      arn            = aws_eks_node_group.general.arn
+      status         = aws_eks_node_group.general.status
+      capacity_type  = aws_eks_node_group.general.capacity_type
+      instance_types = aws_eks_node_group.general.instance_types
+      scaling_config = aws_eks_node_group.general.scaling_config
+    }
+    gpu = var.enable_gpu_nodes ? {
+      id             = aws_eks_node_group.gpu[0].id
+      arn            = aws_eks_node_group.gpu[0].arn
+      status         = aws_eks_node_group.gpu[0].status
+      capacity_type  = aws_eks_node_group.gpu[0].capacity_type
+      instance_types = aws_eks_node_group.gpu[0].instance_types
+      scaling_config = aws_eks_node_group.gpu[0].scaling_config
+    } : null
+  }
+}
+
+# VPC and Networking
+output "vpc_id" {
+  description = "The ID of the VPC"
+  value       = aws_vpc.main.id
+}
+
+output "vpc_cidr" {
+  description = "The CIDR block of the VPC"
+  value       = aws_vpc.main.cidr_block
+}
+
+output "private_subnets" {
+  description = "List of IDs of private subnets"
+  value       = aws_subnet.private[*].id
+}
+
+output "public_subnets" {
+  description = "List of IDs of public subnets"
+  value       = aws_subnet.public[*].id
+}
+
+output "nat_gateway_ids" {
+  description = "List of NAT Gateway IDs"
+  value       = aws_nat_gateway.main[*].id
+}
+
+# Security
+output "node_security_group_id" {
+  description = "Security group ID attached to the EKS nodes"
+  value       = aws_security_group.node.id
+}
+
+# IAM Roles
+output "cluster_iam_role_arn" {
+  description = "IAM role ARN of the EKS cluster"
+  value       = aws_iam_role.cluster.arn
+}
+
+output "node_iam_role_arn" {
+  description = "IAM role ARN of the EKS node group"
+  value       = aws_iam_role.node.arn
+}
+
+# AWS Account Info
+output "aws_region" {
+  description = "AWS region"
+  value       = var.aws_region
+}
+
+output "aws_account_id" {
+  description = "AWS Account ID"
+  value       = data.aws_caller_identity.current.account_id
+}
+
+# Kubectl Configuration
+output "kubectl_config" {
+  description = "kubectl config as generated by the module"
+  value = {
+    cluster_name = aws_eks_cluster.main.name
+    endpoint     = aws_eks_cluster.main.endpoint
+    region       = var.aws_region
+    kubeconfig_command = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
+  }
+}
+
+# SSH Key Information
+output "node_ssh_key_name" {
+  description = "Name of the SSH key pair for nodes"
+  value       = aws_key_pair.node_ssh.key_name
+}
+
+output "node_ssh_key_secret_name" {
+  description = "Name of the AWS Secrets Manager secret containing the SSH private key"
+  value       = aws_secretsmanager_secret.node_ssh_key.name
+}
+
+# Useful Commands
+output "useful_commands" {
+  description = "Useful commands for interacting with the cluster"
+  value = {
+    update_kubeconfig = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
+    get_token         = "aws eks get-token --region ${var.aws_region} --cluster-name ${aws_eks_cluster.main.name}"
+    ssh_key_retrieve  = "aws secretsmanager get-secret-value --secret-id ${aws_secretsmanager_secret.node_ssh_key.name} --query SecretString --output text"
+  }
 }
